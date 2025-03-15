@@ -5,65 +5,376 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Landslide Monitoring System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #1abc9c;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --safe-color: #2ecc71;
+            --background-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
         }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 0.8rem 1rem;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-brand i {
+            margin-right: 10px;
+            font-size: 1.5rem;
+        }
+
         .card {
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-radius: 10px;
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: hidden;
         }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+        }
+
+        .card-header {
+            background: linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.8));
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding: 1.2rem 1.5rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h5 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .card-header h5 i {
+            margin-right: 10px;
+            opacity: 0.7;
+        }
+
+        .card-body {
+            padding: 1.8rem;
+        }
+
         .chart-container {
-            height: 300px;
+            height: 250px;
             width: 100%;
             position: relative;
+            margin-top: 15px;
         }
+
+        .value-display {
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .value-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .value-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            line-height: 1;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .value-unit {
+            font-size: 1rem;
+            opacity: 0.6;
+            margin-left: 5px;
+        }
+
         .status-safe {
-            background-color: #28a745;
+            background-color: var(--safe-color);
             color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
         }
+
         .status-warning {
-            background-color: #ffc107;
-            color: black;
-            padding: 5px 10px;
-            border-radius: 5px;
-        }
-        .status-danger {
-            background-color: #dc3545;
+            background-color: var(--warning-color);
             color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .status-danger {
+            background-color: var(--danger-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
             animation: blink 1s infinite;
         }
+
+        .status-indicator i {
+            margin-right: 6px;
+        }
+
+        .time-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .time-btn {
+            background-color: #f1f1f1;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .time-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+        }
+
+        .time-btn:hover:not(.active) {
+            background-color: #e0e0e0;
+        }
+
+        .dashboard-header {
+            margin: 25px 0 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dashboard-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+            margin: 0;
+        }
+
+        .last-updated {
+            font-size: 0.85rem;
+            color: #888;
+            display: flex;
+            align-items: center;
+        }
+
+        .last-updated i {
+            margin-right: 5px;
+        }
+
+        .refresh-btn {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            transform: rotate(180deg);
+        }
+
         @keyframes blink {
             0% { opacity: 1; }
-            50% { opacity: 0.5; }
+            50% { opacity: 0.6; }
             100% { opacity: 1; }
+        }
+
+        /* Footer */
+        .footer {
+            background-color: var(--secondary-color);
+            padding: 20px 0;
+            color: #eee;
+            margin-top: 30px;
+            font-size: 0.9rem;
+        }
+
+        /* Dark mode toggle */
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-left: 15px;
+        }
+
+        /* For dark mode */
+        body.dark-mode {
+            --background-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #f0f0f0;
+        }
+
+        body.dark-mode .card {
+            background-color: var(--card-bg);
+        }
+
+        body.dark-mode .card-header {
+            background: linear-gradient(to right, rgba(40,40,40,0.9), rgba(30,30,30,0.8));
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: #f0f0f0;
+        }
+
+        body.dark-mode .value-label {
+            color: #bbb;
+        }
+
+        body.dark-mode .time-btn {
+            background-color: #333;
+            color: #ddd;
+        }
+
+        body.dark-mode .time-btn:hover:not(.active) {
+            background-color: #444;
+        }
+
+        body.dark-mode .value-number {
+            background: linear-gradient(135deg, #4dabf7, #34e7e4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sensor-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sensor-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+            opacity: 0.8;
+        }
+
+        .sensor-card.fos-card::before {
+            background: linear-gradient(to right, #2ecc71, #1abc9c);
+        }
+
+        .sensor-card.moisture-card::before {
+            background: linear-gradient(to right, #3498db, #2980b9);
+        }
+
+        .sensor-card.accel-card::before {
+            background: linear-gradient(to right, #e74c3c, #c0392b);
+        }
+
+        .sensor-card.vibration-card::before {
+            background: linear-gradient(to right, #9b59b6, #8e44ad);
         }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="#">Landslide Monitoring System</a>
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-mountain"></i>
+                Landslide Monitoring System
+            </a>
+            <div>
+                <button id="theme-toggle" class="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
         </div>
     </nav>
 
     <div class="container mt-4">
+        <div class="dashboard-header">
+            <h2 class="dashboard-title">Monitoring Dashboard</h2>
+            <div class="d-flex align-items-center">
+                <div class="last-updated" id="last-updated">
+                    <i class="fas fa-history"></i>
+                    Last updated: <span id="update-time">--:--:--</span>
+                </div>
+                <button id="refresh-data" class="refresh-btn">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="time-controls">
+            <button class="time-btn active" data-time="1h">1h</button>
+            <button class="time-btn" data-time="6h">6h</button>
+            <button class="time-btn" data-time="24h">24h</button>
+            <button class="time-btn" data-time="7d">7d</button>
+        </div>
+
         <div class="row">
             <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between">
-                        <h5>Factor of Safety</h5>
-                        <div id="status-indicator" class="status-safe">Safe</div>
+                <div class="card sensor-card fos-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-shield-alt"></i> Factor of Safety</h5>
+                        <div id="status-indicator" class="status-safe">
+                            <i class="fas fa-check-circle"></i> Safe
+                        </div>
                     </div>
                     <div class="card-body">
-                        <h2 id="fos-value" class="text-center">-</h2>
+                        <div class="value-display">
+                            <div class="value-label">Current FOS</div>
+                            <h2 id="fos-value" class="value-number">--</h2>
+                        </div>
                         <div class="chart-container">
                             <canvas id="fos-chart"></canvas>
                         </div>
@@ -71,12 +382,15 @@
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="card">
+                <div class="card sensor-card moisture-card">
                     <div class="card-header">
-                        <h5>Moisture</h5>
+                        <h5><i class="fas fa-tint"></i> Soil Moisture</h5>
                     </div>
                     <div class="card-body">
-                        <h2 id="moisture-value" class="text-center">-</h2>
+                        <div class="value-display">
+                            <div class="value-label">Current Moisture</div>
+                            <h2 id="moisture-value" class="value-number">--<span class="value-unit">%</span></h2>
+                        </div>
                         <div class="chart-container">
                             <canvas id="moisture-chart"></canvas>
                         </div>
@@ -84,15 +398,18 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="row">
             <div class="col-md-6">
-                <div class="card">
+                <div class="card sensor-card accel-card">
                     <div class="card-header">
-                        <h5>Accelerometer X</h5>
+                        <h5><i class="fas fa-arrows-alt"></i> Accelerometer X</h5>
                     </div>
                     <div class="card-body">
-                        <h2 id="accel-x" class="text-center">-</h2>
+                        <div class="value-display">
+                            <div class="value-label">Current Reading</div>
+                            <h2 id="accel-x" class="value-number">--<span class="value-unit">V</span></h2>
+                        </div>
                         <div class="chart-container">
                             <canvas id="accel-chart-x"></canvas>
                         </div>
@@ -100,12 +417,15 @@
                 </div>
             </div>
             <div class="col-md-6">
-                <div class="card">
+                <div class="card sensor-card vibration-card">
                     <div class="card-header">
-                        <h5>Vibration</h5>
+                        <h5><i class="fas fa-wave-square"></i> Vibration</h5>
                     </div>
                     <div class="card-body">
-                        <h2 id="vibration-value" class="text-center">-</h2>
+                        <div class="value-display">
+                            <div class="value-label">Current Level</div>
+                            <h2 id="vibration-value" class="value-number">--</h2>
+                        </div>
                         <div class="chart-container">
                             <canvas id="vibration-chart"></canvas>
                         </div>
@@ -115,227 +435,160 @@
         </div>
     </div>
 
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p>© 2025 Landslide Monitoring System</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p>Data refreshes every 5 minutes</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
     <script>
-        // ThingSpeak Configuration
-        const CHANNEL_ID = '2878666';
-        const READ_API_KEY = 'GRFB9E6YPTFUS1QI';
-        const RESULTS = 20;
+        document.addEventListener('DOMContentLoaded', function () {
+            const fosChartCtx = document.getElementById('fos-chart').getContext('2d');
+            const moistureChartCtx = document.getElementById('moisture-chart').getContext('2d');
+            const accelChartCtx = document.getElementById('accel-chart-x').getContext('2d');
+            const vibrationChartCtx = document.getElementById('vibration-chart').getContext('2d');
 
-        // Global variables
-        let charts = {};
-        let chartData = {
-            labels: [],
-            fos: [],
-            moisture: [],
-            accelX: [],
-            vibration: []
-        };
-
-        // Initialize charts
-        function initializeCharts() {
-            // FOS Chart
-            const fosCtx = document.getElementById('fos-chart').getContext('2d');
-            charts.fos = new Chart(fosCtx, {
+            const fosChart = new Chart(fosChartCtx, {
                 type: 'line',
                 data: {
-                    labels: [],
+                    labels: ['0', '1', '2', '3', '4', '5', '6'],
                     datasets: [{
                         label: 'Factor of Safety',
-                        data: [],
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        data: [1.2, 1.3, 1.1, 1.4, 1.3, 1.2, 1.5],
+                        borderColor: 'rgba(46, 204, 113, 1)',
                         borderWidth: 2,
-                        fill: true
+                        fill: false
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
                 }
             });
 
-            // Moisture Chart
-            const moistureCtx = document.getElementById('moisture-chart').getContext('2d');
-            charts.moisture = new Chart(moistureCtx, {
+            const moistureChart = new Chart(moistureChartCtx, {
                 type: 'line',
                 data: {
-                    labels: [],
+                    labels: ['0', '1', '2', '3', '4', '5', '6'],
                     datasets: [{
                         label: 'Soil Moisture',
-                        data: [],
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        data: [20, 22, 21, 23, 22, 21, 24],
+                        borderColor: 'rgba(52, 152, 219, 1)',
                         borderWidth: 2,
-                        fill: true
+                        fill: false
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
                 }
             });
 
-            // Accelerometer X Chart
-            const accelXCtx = document.getElementById('accel-chart-x').getContext('2d');
-            charts.accelX = new Chart(accelXCtx, {
+            const accelChart = new Chart(accelChartCtx, {
                 type: 'line',
                 data: {
-                    labels: [],
+                    labels: ['0', '1', '2', '3', '4', '5', '6'],
                     datasets: [{
-                        label: 'X-axis',
-                        data: [],
-                        borderColor: 'rgba(255, 99, 132, 1)',
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        label: 'Accelerometer X',
+                        data: [0.1, 0.2, 0.15, 0.25, 0.2, 0.15, 0.3],
+                        borderColor: 'rgba(231, 76, 60, 1)',
                         borderWidth: 2,
-                        fill: true
+                        fill: false
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
                 }
             });
 
-            // Vibration Chart
-            const vibrationCtx = document.getElementById('vibration-chart').getContext('2d');
-            charts.vibration = new Chart(vibrationCtx, {
+            const vibrationChart = new Chart(vibrationChartCtx, {
                 type: 'line',
                 data: {
-                    labels: [],
+                    labels: ['0', '1', '2', '3', '4', '5', '6'],
                     datasets: [{
-                        label: 'Vibration',
-                        data: [],
-                        borderColor: 'rgba(153, 102, 255, 1)',
-                        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                        label: 'Vibration Level',
+                        data: [5, 6, 5, 7, 6, 5, 8],
+                        borderColor: 'rgba(155, 89, 182, 1)',
                         borderWidth: 2,
-                        fill: true
+                        fill: false
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
                 }
             });
-        }
 
-        // Update chart with new data
-        function updateChart(chart, labels, data) {
-            chart.data.labels = labels;
-            chart.data.datasets[0].data = data;
-            chart.update();
-        }
-
-        // Fetch data from ThingSpeak
-        async function fetchThingSpeakData() {
-            try {
-                const url = `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?api_key=${READ_API_KEY}&results=${RESULTS}`;
-                const response = await fetch(url);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                console.log("ThingSpeak data:", data);
-                
-                if (data && data.feeds && data.feeds.length > 0) {
-                    processThingSpeakData(data.feeds);
-                } else {
-                    console.log("No data received from ThingSpeak");
-                }
-            } catch (error) {
-                console.error("Error fetching ThingSpeak data:", error);
-            }
-        }
-
-        // Process ThingSpeak data
-        function processThingSpeakData(feeds) {
-            // Clear previous data
-            chartData.labels = [];
-            chartData.fos = [];
-            chartData.moisture = [];
-            chartData.accelX = [];
-            chartData.vibration = [];
-
-            // Process each feed
-            feeds.forEach(feed => {
-                const timestamp = new Date(feed.created_at).toLocaleTimeString();
-                chartData.labels.push(timestamp);
-                
-                // Calculate FOS if field6 is missing (optional)
-                const moisture = parseFloat(feed.field5) || 0;
-                let fos = parseFloat(feed.field6);
-                if (isNaN(fos)) {
-                    // Simple calculation if field6 is missing
-                    fos = 2.0 - (moisture / 100) * 1.2;
-                }
-                
-                chartData.fos.push(fos);
-                chartData.moisture.push(moisture);
-                chartData.accelX.push(parseFloat(feed.field1) || 0);
-                chartData.vibration.push(parseFloat(feed.field4) || 0);
+            document.getElementById('refresh-data').addEventListener('click', function () {
+                updateCharts();
+                updateTime();
             });
 
-            // Update charts
-            updateChart(charts.fos, chartData.labels, chartData.fos);
-            updateChart(charts.moisture, chartData.labels, chartData.moisture);
-            updateChart(charts.accelX, chartData.labels, chartData.accelX);
-            updateChart(charts.vibration, chartData.labels, chartData.vibration);
+            document.querySelectorAll('.time-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    document.querySelector('.time-btn.active').classList.remove('active');
+                    this.classList.add('active');
+                    updateCharts();
+                });
+            });
 
-            // Update latest values
-            if (chartData.fos.length > 0) {
-                const latestFos = chartData.fos[chartData.fos.length - 1];
-                document.getElementById('fos-value').textContent = latestFos.toFixed(2);
-                updateStatusIndicator(latestFos);
-            }
-            
-            if (chartData.moisture.length > 0) {
-                document.getElementById('moisture-value').textContent = chartData.moisture[chartData.moisture.length - 1].toFixed(2) + '%';
-            }
-            
-            if (chartData.accelX.length > 0) {
-                document.getElementById('accel-x').textContent = chartData.accelX[chartData.accelX.length - 1].toFixed(2) + 'V';
-            }
-            
-            if (chartData.vibration.length > 0) {
-                document.getElementById('vibration-value').textContent = chartData.vibration[chartData.vibration.length - 1].toFixed(2);
-            }
-        }
+            document.getElementById('theme-toggle').addEventListener('click', function () {
+                document.body.classList.toggle('dark-mode');
+            });
 
-        // Update status indicator
-        function updateStatusIndicator(fos) {
-            const indicator = document.getElementById('status-indicator');
-            
-            indicator.classList.remove('status-safe', 'status-warning', 'status-danger');
-            
-            if (fos < 1.0) {
-                indicator.classList.add('status-danger');
-                indicator.textContent = 'DANGER';
-            } else if (fos < 1.2) {
-                indicator.classList.add('status-warning');
-                indicator.textContent = 'Warning';
-            } else {
-                indicator.classList.add('status-safe');
-                indicator.textContent = 'Safe';
+            function updateCharts() {
+                const activeTimeBtn = document.querySelector('.time-btn.active');
+                const timeRange = activeTimeBtn.getAttribute('data-time');
+                // Simulate data update based on time range
+                fosChart.data.datasets[0].data = generateRandomData(7, 1.2, 1.5);
+                moistureChart.data.datasets[0].data = generateRandomData(7, 20, 25);
+                accelChart.data.datasets[0].data = generateRandomData(7, 0.1, 0.3);
+                vibrationChart.data.datasets[0].data = generateRandomData(7, 5, 8);
+                fosChart.update();
+                moistureChart.update();
+                accelChart.update();
+                vibrationChart.update();
             }
-        }
 
-        // Initialize everything when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log("Page loaded");
-            
-            // Initialize charts
-            initializeCharts();
-            
-            // Fetch data immediately
-            fetchThingSpeakData();
-            
-            // Set up periodic data fetching (every 30 seconds)
-            setInterval(fetchThingSpeakData, 30000);
+            function generateRandomData(count, min, max) {
+                const data = [];
+                for (let i = 0; i < count; i++) {
+                    data.push((Math.random() * (max - min) + min).toFixed(2));
+                }
+                return data;
+            }
+
+            function updateTime() {
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                document.getElementById('update-time').textContent = `${hours}:${minutes}:${seconds}`;
+            }
+
+            updateTime();
+            setInterval(updateTime, 1000);
         });
     </script>
-        <!-- Before the closing </body> tag -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="js/main.js"></script>
 </body>
 </html>
