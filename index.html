@@ -417,6 +417,41 @@
                 </div>
             </div>
             <div class="col-md-6">
+                <div class="card sensor-card accel-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-arrows-alt"></i> Accelerometer Y</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="value-display">
+                            <div class="value-label">Current Reading</div>
+                            <h2 id="accel-y" class="value-number">--<span class="value-unit">V</span></h2>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="accel-chart-y"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card sensor-card accel-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-arrows-alt"></i> Accelerometer Z</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="value-display">
+                            <div class="value-label">Current Reading</div>
+                            <h2 id="accel-z" class="value-number">--<span class="value-unit">V</span></h2>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="accel-chart-z"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
                 <div class="card sensor-card vibration-card">
                     <div class="card-header">
                         <h5><i class="fas fa-wave-square"></i> Vibration</h5>
@@ -439,10 +474,10 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <p>© 2025 Landslide Monitoring System</p>
+                    <p>2025 Landslide Monitoring System | MIT-WPU | CWPRS</p>
                 </div>
                 <div class="col-md-6 text-end">
-                    <p>Data refreshes every 5 minutes</p>
+                    <p>Data refreshes every 5 seconds</p>
                 </div>
             </div>
         </div>
@@ -450,7 +485,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', async function () {
-            const updateInterval = 15000; // Fetch data every 15 seconds
+            const updateInterval = 5000; // Fetch data every 15 seconds
 
             async function fetchLatestData() {
                 try {
@@ -471,7 +506,9 @@
                 document.getElementById('fos-value').textContent = data.field1 || '--';
                 document.getElementById('moisture-value').textContent = data.field2 ? `${data.field2}%` : '--%';
                 document.getElementById('accel-x').textContent = data.field3 ? `${data.field3} V` : '-- V';
-                document.getElementById('vibration-value').textContent = data.field4 || '--';
+                document.getElementById('accel-y').textContent = data.field4 ? `${data.field4} V` : '-- V';
+                document.getElementById('accel-z').textContent = data.field5 ? `${data.field5} V` : '-- V';
+                document.getElementById('vibration-value').textContent = data.field6 || '--';
 
                 updateCharts(data);
                 updateTime();
@@ -486,11 +523,19 @@
                 moistureChart.data.labels.push(new Date().toLocaleTimeString());
                 moistureChart.update();
 
-                accelChart.data.datasets[0].data.push(data.field3);
-                accelChart.data.labels.push(new Date().toLocaleTimeString());
-                accelChart.update();
+                accelChartX.data.datasets[0].data.push(data.field3);
+                accelChartX.data.labels.push(new Date().toLocaleTimeString());
+                accelChartX.update();
 
-                vibrationChart.data.datasets[0].data.push(data.field4);
+                accelChartY.data.datasets[0].data.push(data.field4);
+                accelChartY.data.labels.push(new Date().toLocaleTimeString());
+                accelChartY.update();
+
+                accelChartZ.data.datasets[0].data.push(data.field5);
+                accelChartZ.data.labels.push(new Date().toLocaleTimeString());
+                accelChartZ.update();
+
+                vibrationChart.data.datasets[0].data.push(data.field6);
                 vibrationChart.data.labels.push(new Date().toLocaleTimeString());
                 vibrationChart.update();
             }
@@ -505,7 +550,9 @@
 
             const fosChartCtx = document.getElementById('fos-chart').getContext('2d');
             const moistureChartCtx = document.getElementById('moisture-chart').getContext('2d');
-            const accelChartCtx = document.getElementById('accel-chart-x').getContext('2d');
+            const accelChartCtxX = document.getElementById('accel-chart-x').getContext('2d');
+            const accelChartCtxY = document.getElementById('accel-chart-y').getContext('2d');
+            const accelChartCtxZ = document.getElementById('accel-chart-z').getContext('2d');
             const vibrationChartCtx = document.getElementById('vibration-chart').getContext('2d');
 
             const fosChart = new Chart(fosChartCtx, {
@@ -550,7 +597,7 @@
                 }
             });
 
-            const accelChart = new Chart(accelChartCtx, {
+            const accelChartX = new Chart(accelChartCtxX, {
                 type: 'line',
                 data: {
                     labels: [],
@@ -558,6 +605,48 @@
                         label: 'Accelerometer X',
                         data: [],
                         borderColor: 'rgba(231, 76, 60, 1)',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            const accelChartY = new Chart(accelChartCtxY, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Accelerometer Y',
+                        data: [],
+                        borderColor: 'rgba(241, 196, 15, 1)',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            const accelChartZ = new Chart(accelChartCtxZ, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Accelerometer Z',
+                        data: [],
+                        borderColor: 'rgba(155, 89, 182, 1)',
                         borderWidth: 2,
                         fill: false
                     }]

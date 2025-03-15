@@ -7,13 +7,13 @@ let updateInterval = null;
 document.addEventListener('DOMContentLoaded', function() {
     initCharts();
     setupEventListeners();
-    
+
     // Initial data fetch from ThingSpeak
     fetchAndUpdateData();
-    
+
     // Set up periodic updates from ThingSpeak (every 30 seconds)
     updateInterval = setInterval(fetchAndUpdateData, 30000);
-    
+
     // Update time display
     updateTime();
     setInterval(updateTime, 1000);
@@ -82,6 +82,46 @@ function initCharts() {
         }
     });
 
+    const accelYCtx = document.getElementById('accel-chart-y').getContext('2d');
+    charts.accelY = new Chart(accelYCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Y-axis',
+                data: [],
+                borderColor: 'rgba(241, 196, 15, 1)',
+                backgroundColor: 'rgba(241, 196, 15, 0.2)',
+                borderWidth: 2,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    const accelZCtx = document.getElementById('accel-chart-z').getContext('2d');
+    charts.accelZ = new Chart(accelZCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Z-axis',
+                data: [],
+                borderColor: 'rgba(155, 89, 182, 1)',
+                backgroundColor: 'rgba(155, 89, 182, 0.2)',
+                borderWidth: 2,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
     const vibrationCtx = document.getElementById('vibration-chart').getContext('2d');
     charts.vibration = new Chart(vibrationCtx, {
         type: 'line',
@@ -114,13 +154,13 @@ function setupEventListeners() {
             fetchAndUpdateData();
         });
     });
-    
+
     // Refresh button
     document.getElementById('refresh-data').addEventListener('click', function() {
         fetchAndUpdateData();
         updateTime();
     });
-    
+
     // Theme toggle
     document.getElementById('theme-toggle').addEventListener('click', function() {
         document.body.classList.toggle('dark-mode');
@@ -140,7 +180,7 @@ function updateTime() {
 async function fetchAndUpdateData() {
     try {
         let results = 20; // Default for 1h
-        
+
         // Adjust results based on selected time range
         switch(currentTimeRange) {
             case '6h':
@@ -153,14 +193,14 @@ async function fetchAndUpdateData() {
                 results = 1000;
                 break;
         }
-        
+
         const url = `https://api.thingspeak.com/channels/2878666/feeds.json?api_key=GRFB9E6YPTFUS1QI&results=${results}`;
         const response = await fetch(url);
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        
+
         const data = await response.json();
         if (data && data.feeds && data.feeds.length > 0) {
             processThingSpeakData(data.feeds);
@@ -181,6 +221,8 @@ function processThingSpeakData(feeds) {
         fos: [],
         moisture: [],
         accelX: [],
+        accelY: [],
+        accelZ: [],
         vibration: []
     };
 
@@ -190,13 +232,15 @@ function processThingSpeakData(feeds) {
         const date = new Date(feed.created_at);
         const timeStr = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         chartData.labels.push(timeStr);
-        
+
         // Map ThingSpeak fields to our variables
         // Adjust these field mappings based on your ThingSpeak channel setup
         chartData.accelX.push(parseFloat(feed.field1) || 0);
+        chartData.accelY.push(parseFloat(feed.field2) || 0);
+        chartData.accelZ.push(parseFloat(feed.field3) || 0);
         chartData.vibration.push(parseFloat(feed.field4) || 0);
         chartData.moisture.push(parseFloat(feed.field5) || 0);
-        
+
         // Calculate FOS based on moisture if field6 is not available
         // This is a placeholder calculation - adjust based on your actual formula
         const fosValue = parseFloat(feed.field6) || calculateFOS(parseFloat(feed.field5) || 0);
@@ -207,6 +251,8 @@ function processThingSpeakData(feeds) {
     updateChart(charts.fos, chartData.labels, chartData.fos);
     updateChart(charts.moisture, chartData.labels, chartData.moisture);
     updateChart(charts.accelX, chartData.labels, chartData.accelX);
+    updateChart(charts.accelY, chartData.labels, chartData.accelY);
+    updateChart(charts.accelZ, chartData.labels, chartData.accelZ);
     updateChart(charts.vibration, chartData.labels, chartData.vibration);
 
     // Update latest values (most recent data point)
@@ -215,15 +261,23 @@ function processThingSpeakData(feeds) {
         document.getElementById('fos-value').textContent = latestFos.toFixed(2);
         updateStatusIndicator(latestFos);
     }
-    
+
     if (chartData.moisture.length > 0) {
         document.getElementById('moisture-value').textContent = chartData.moisture[chartData.moisture.length - 1].toFixed(1);
     }
-    
+
     if (chartData.accelX.length > 0) {
         document.getElementById('accel-x').textContent = chartData.accelX[chartData.accelX.length - 1].toFixed(2);
     }
-    
+
+    if (chartData.accelY.length > 0) {
+        document.getElementById('accel-y').textContent = chartData.accelY[chartData.accelY.length - 1].toFixed(2);
+    }
+
+    if (chartData.accelZ.length > 0) {
+        document.getElementById('accel-z').textContent = chartData.accelZ[chartData.accelZ.length - 1].toFixed(2);
+    }
+
     if (chartData.vibration.length > 0) {
         document.getElementById('vibration-value').textContent = chartData.vibration[chartData.vibration.length - 1].toFixed(1);
     }
@@ -247,10 +301,10 @@ function updateChart(chart, labels, data) {
 // Update status indicator
 function updateStatusIndicator(fos) {
     const indicator = document.getElementById('status-indicator');
-    
+
     // Remove all existing status classes
     indicator.classList.remove('status-safe', 'status-warning', 'status-danger');
-    
+
     // Update status based on FOS value
     if (fos < 1.0) {
         indicator.classList.add('status-danger');
