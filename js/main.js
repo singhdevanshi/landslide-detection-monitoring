@@ -11,11 +11,13 @@ document.addEventListener('DOMContentLoaded', function() {
     initCharts();
     setupEventListeners();
     initBootstrapComponents();
+    initMQTT(); // Initialize MQTT
     
-    // Initial data fetch
+    // Initial data fetch from ThingSpeak
     fetchAndUpdateData();
     
-    // Set up periodic updates (every 30 seconds)
+    // Set up periodic updates from ThingSpeak (every 30 seconds)
+    // We can keep this as a fallback if MQTT connection fails
     updateInterval = setInterval(fetchAndUpdateData, 30000);
 });
 
@@ -33,12 +35,32 @@ function initMap() {
 }
 
 // Initialize all charts
+// Fix the initCharts function
 function initCharts() {
     charts.fos = createFosChart();
-    charts.accel = createAccelChart();
+    charts.accelX = createAccelChartX();
+    charts.accelY = createAccelChartY();
     charts.vibration = createVibrationChart();
     charts.moisture = createMoistureChart();
     charts.history = createHistoryChart();
+}
+
+// And update the updateCharts function
+function updateCharts(data) {
+    const timestamp = new Date(data.created_at).toLocaleTimeString();
+    
+    // Update FOS chart
+    addDataPoint(charts.fos, timestamp, parseFloat(data.field6));
+    
+    // Update accelerometer charts
+    addDataPoint(charts.accelX, timestamp, parseFloat(data.field1));
+    addDataPoint(charts.accelY, timestamp, parseFloat(data.field2));
+    
+    // Update vibration chart
+    addDataPoint(charts.vibration, timestamp, parseFloat(data.field4));
+    
+    // Update moisture chart
+    addDataPoint(charts.moisture, timestamp, parseFloat(data.field5));
 }
 
 // Setup event listeners

@@ -17,6 +17,36 @@
         </div>
     </nav>
 
+    <!-- Add this before your charts section -->
+<div class="row">
+    <div class="col-md-12">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5>Current Sensor Readings</h5>
+        </div>
+        <div class="card-body">
+          <div class="sensor-readings">
+            <div class="row">
+              <div class="col-md-4">
+                <p>Accelerometer X: <span id="accel-x">-</span> V</p>
+                <p>Accelerometer Y: <span id="accel-y">-</span> V</p>
+                <p>Accelerometer Z: <span id="accel-z">-</span> V</p>
+              </div>
+              <div class="col-md-4">
+                <p>Vibration: <span id="vibration-value">-</span></p>
+                <p>Soil Moisture: <span id="moisture-value">-</span>%</p>
+              </div>
+              <div class="col-md-4">
+                <div class="fos-value" id="fos-value">-</div>
+                <p class="text-center">Factor of Safety</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
     <div class="container mt-4">
         <div class="row">
             <div class="col-md-6">
@@ -146,3 +176,4 @@
     <script src="js/main.js"></script>
 </body>
 </html>
+s

@@ -1,44 +1,20 @@
-// thingspeak-api.js
-class ThingSpeakAPI {
-    constructor(channelId, readApiKey) {
-        this.channelId = channelId;
-        this.readApiKey = readApiKey;
-        this.baseUrl = 'https://api.thingspeak.com';
-    }
+async function testThingSpeak() {
+    const CHANNEL_ID = '2878666';
+    const READ_API_KEY = 'GRFB9E6YPTFUS1QI';
+    const url = `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?api_key=${READ_API_KEY}&results=10`;
     
-    async getLatestData() {
-        try {
-            const response = await fetch(
-                `${this.baseUrl}/channels/${this.channelId}/feeds/last.json?api_key=${this.readApiKey}`
-            );
-            if (!response.ok) {
-                throw new Error('Failed to fetch data');
-            }
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching latest data:', error);
-            return null;
-        }
-    }
-    
-    async getHistoricalData(days = 1) {
-        try {
-            const response = await fetch(
-                `${this.baseUrl}/channels/${this.channelId}/feeds.json?api_key=${this.readApiKey}&days=${days}`
-            );
-            if (!response.ok) {
-                throw new Error('Failed to fetch historical data');
-            }
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching historical data:', error);
-            return null;
-        }
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        console.log("ThingSpeak data:", data);
+        return data;
+    } catch (error) {
+        console.error("Error fetching from ThingSpeak:", error);
+        return null;
     }
 }
 
-// Replace with your actual channel ID and read API key
-const CHANNEL_ID = '2878666';
-const READ_API_KEY = 'GRFB9E6YPTFUS1QI';
-
-const thingSpeakClient = new ThingSpeakAPI(CHANNEL_ID, READ_API_KEY);
+// Call this function to test
+document.addEventListener('DOMContentLoaded', function() {
+    testThingSpeak();
+});
