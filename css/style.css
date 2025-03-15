@@ -1,0 +1,93 @@
+/* General Styling */
+body {
+    background-color: #f5f5f5;
+    font-family: Arial, sans-serif;
+}
+
+.card {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: none;
+    padding: 15px;
+    border-radius: 10px;
+    background-color: white;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* Sensor Readings */
+.fos-value {
+    font-size: 3rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.sensor-readings {
+    margin-top: 15px;
+    font-size: 1.1rem;
+}
+
+/* Status Indicators */
+.status-safe {
+    padding: 5px 10px;
+    background-color: #28a745;
+    color: white;
+    border-radius: 5px;
+}
+
+.status-warning {
+    padding: 5px 10px;
+    background-color: #ffc107;
+    color: black;
+    border-radius: 5px;
+}
+
+.status-danger {
+    padding: 5px 10px;
+    background-color: #dc3545;
+    color: white;
+    border-radius: 5px;
+    animation: blink 1s infinite;
+}
+
+/* Blink animation for danger status */
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Fix Chart Height */
+/* Ensure the chart containers have a fixed height */
+.chart-container {
+    width: 100%;
+    height: 300px; /* Adjust height as needed */
+    max-height: 300px; /* Ensures charts don't become too large */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Ensure the canvas inside charts doesn't overflow */
+canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Center Chart Controls */
+.chart-controls {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.chart-controls .btn {
+    margin: 0 5px;
+    padding: 5px 10px;
+    font-size: 1rem;
+    border-radius: 5px;
+}
