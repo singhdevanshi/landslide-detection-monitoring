@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Set up periodic updates from ThingSpeak (every 30 seconds)
     updateInterval = setInterval(fetchAndUpdateData, 30000);
+    
+    // Update time display
+    updateTime();
+    setInterval(updateTime, 1000);
 });
 
 // Initialize all charts
@@ -26,8 +30,8 @@ function initCharts() {
             datasets: [{
                 label: 'Factor of Safety',
                 data: [],
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(46, 204, 113, 1)',
+                backgroundColor: 'rgba(46, 204, 113, 0.2)',
                 borderWidth: 2,
                 fill: true
             }]
@@ -46,8 +50,8 @@ function initCharts() {
             datasets: [{
                 label: 'Soil Moisture',
                 data: [],
-                borderColor: 'rgba(54, 162, 235, 1)',
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(52, 152, 219, 1)',
+                backgroundColor: 'rgba(52, 152, 219, 0.2)',
                 borderWidth: 2,
                 fill: true
             }]
@@ -66,8 +70,8 @@ function initCharts() {
             datasets: [{
                 label: 'X-axis',
                 data: [],
-                borderColor: 'rgba(255, 99, 132, 1)',
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(231, 76, 60, 1)',
+                backgroundColor: 'rgba(231, 76, 60, 0.2)',
                 borderWidth: 2,
                 fill: true
             }]
@@ -86,8 +90,8 @@ function initCharts() {
             datasets: [{
                 label: 'Vibration',
                 data: [],
-                borderColor: 'rgba(153, 102, 255, 1)',
-                backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                borderColor: 'rgba(155, 89, 182, 1)',
+                backgroundColor: 'rgba(155, 89, 182, 0.2)',
                 borderWidth: 2,
                 fill: true
             }]
@@ -101,13 +105,56 @@ function initCharts() {
 
 // Setup event listeners
 function setupEventListeners() {
-    // No buttons in the current HTML, but we can add this if needed
+    // Time range buttons
+    document.querySelectorAll('.time-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            document.querySelector('.time-btn.active').classList.remove('active');
+            this.classList.add('active');
+            currentTimeRange = this.getAttribute('data-time');
+            fetchAndUpdateData();
+        });
+    });
+    
+    // Refresh button
+    document.getElementById('refresh-data').addEventListener('click', function() {
+        fetchAndUpdateData();
+        updateTime();
+    });
+    
+    // Theme toggle
+    document.getElementById('theme-toggle').addEventListener('click', function() {
+        document.body.classList.toggle('dark-mode');
+    });
+}
+
+// Update the time display
+function updateTime() {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    document.getElementById('update-time').textContent = `${hours}:${minutes}:${seconds}`;
 }
 
 // Fetch and update all data
 async function fetchAndUpdateData() {
     try {
-        const url = `https://api.thingspeak.com/channels/2878666/feeds.json?api_key=GRFB9E6YPTFUS1QI&results=20`;
+        let results = 20; // Default for 1h
+        
+        // Adjust results based on selected time range
+        switch(currentTimeRange) {
+            case '6h':
+                results = 60;
+                break;
+            case '24h':
+                results = 200;
+                break;
+            case '7d':
+                results = 1000;
+                break;
+        }
+        
+        const url = `https://api.thingspeak.com/channels/2878666/feeds.json?api_key=GRFB9E6YPTFUS1QI&results=${results}`;
         const response = await fetch(url);
         
         if (!response.ok) {
@@ -117,6 +164,7 @@ async function fetchAndUpdateData() {
         const data = await response.json();
         if (data && data.feeds && data.feeds.length > 0) {
             processThingSpeakData(data.feeds);
+            updateTime(); // Update last updated time
         } else {
             console.log("No data received from ThingSpeak");
         }
@@ -138,23 +186,30 @@ function processThingSpeakData(feeds) {
 
     // Process each feed
     feeds.forEach(feed => {
-        const timestamp = new Date(feed.created_at).toLocaleTimeString();
-        chartData.labels.push(timestamp);
+        // Format timestamp as readable time
+        const date = new Date(feed.created_at);
+        const timeStr = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        chartData.labels.push(timeStr);
         
-        // Use field values directly from your ESP32 code
+        // Map ThingSpeak fields to our variables
+        // Adjust these field mappings based on your ThingSpeak channel setup
         chartData.accelX.push(parseFloat(feed.field1) || 0);
-        chartData.moisture.push(parseFloat(feed.field5) || 0);
         chartData.vibration.push(parseFloat(feed.field4) || 0);
-        chartData.fos.push(parseFloat(feed.field6) || 0);
+        chartData.moisture.push(parseFloat(feed.field5) || 0);
+        
+        // Calculate FOS based on moisture if field6 is not available
+        // This is a placeholder calculation - adjust based on your actual formula
+        const fosValue = parseFloat(feed.field6) || calculateFOS(parseFloat(feed.field5) || 0);
+        chartData.fos.push(fosValue);
     });
 
-    // Update charts
+    // Update charts with the latest data (most recent data points at the end)
     updateChart(charts.fos, chartData.labels, chartData.fos);
     updateChart(charts.moisture, chartData.labels, chartData.moisture);
     updateChart(charts.accelX, chartData.labels, chartData.accelX);
     updateChart(charts.vibration, chartData.labels, chartData.vibration);
 
-    // Update latest values
+    // Update latest values (most recent data point)
     if (chartData.fos.length > 0) {
         const latestFos = chartData.fos[chartData.fos.length - 1];
         document.getElementById('fos-value').textContent = latestFos.toFixed(2);
@@ -162,16 +217,24 @@ function processThingSpeakData(feeds) {
     }
     
     if (chartData.moisture.length > 0) {
-        document.getElementById('moisture-value').textContent = chartData.moisture[chartData.moisture.length - 1].toFixed(2) + '%';
+        document.getElementById('moisture-value').textContent = chartData.moisture[chartData.moisture.length - 1].toFixed(1);
     }
     
     if (chartData.accelX.length > 0) {
-        document.getElementById('accel-x').textContent = chartData.accelX[chartData.accelX.length - 1].toFixed(2) + 'V';
+        document.getElementById('accel-x').textContent = chartData.accelX[chartData.accelX.length - 1].toFixed(2);
     }
     
     if (chartData.vibration.length > 0) {
-        document.getElementById('vibration-value').textContent = chartData.vibration[chartData.vibration.length - 1].toFixed(2);
+        document.getElementById('vibration-value').textContent = chartData.vibration[chartData.vibration.length - 1].toFixed(1);
     }
+}
+
+// Calculate Factor of Safety based on moisture
+// Simple model for when FOS is not directly available
+function calculateFOS(moisture) {
+    // Simple model: FOS decreases as moisture increases
+    // Adjust this formula as needed for your specific use case
+    return 2.0 - (moisture / 100) * 1.2;
 }
 
 // Update chart with new data
@@ -185,16 +248,18 @@ function updateChart(chart, labels, data) {
 function updateStatusIndicator(fos) {
     const indicator = document.getElementById('status-indicator');
     
+    // Remove all existing status classes
     indicator.classList.remove('status-safe', 'status-warning', 'status-danger');
     
+    // Update status based on FOS value
     if (fos < 1.0) {
         indicator.classList.add('status-danger');
-        indicator.textContent = 'DANGER';
+        indicator.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Danger';
     } else if (fos < 1.2) {
         indicator.classList.add('status-warning');
-        indicator.textContent = 'Warning';
+        indicator.innerHTML = '<i class="fas fa-exclamation-circle"></i> Warning';
     } else {
         indicator.classList.add('status-safe');
-        indicator.textContent = 'Safe';
+        indicator.innerHTML = '<i class="fas fa-check-circle"></i> Safe';
     }
 }
